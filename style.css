@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Tajawal', sans-serif;
+  background-color: #ffffff;
+  color: #26485B;
+  direction: rtl;
+  line-height: 1.6;
+}
+
+/* === Header === */
+header {
+  background-color: #26485B;
+  padding: 1rem 2rem;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 90px;
+}
+
+.logo {
+  flex: 0 0 auto;
+}
+
+.logo img {
+  height: 70px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li {
+  list-style: none;
+}
+
+.nav-links a {
+  color: #ffffff;
+  font-size: 18pt;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.3s;
+}
+
+.nav-links a:hover {
+  opacity: 0.8;
+}
+
+/* === Sections General === */
+.section {
+  padding: 4rem 1.5rem;
+  max-width: 1200px;
+  margin: auto;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.section h2 {
+  font-size: 26pt;
+  margin-bottom: 2rem;
+}
+
+/* === Home Section === */
+.home-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .home-content {
+    flex-direction: row-reverse;
+    justify-content: center;
+    text-align: right;
+  }
+
+  .home-left,
+  .home-right {
+    flex: 1;
+    padding: 1rem;
+  }
+
+  .home-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+.app-preview {
+  max-width: 300px;
+  width: 100%;
+}
+
+
+/* === Cards Layout for Store & Driver Sections === */
+.cards-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.cards-row {
+  display: flex;
+  flex-direction: column; /* ترتيب رأسي دائمًا */
+  gap: 3rem;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+}
+
+.card {
+  background-color: #f9f9f9;
+  flex: 1;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  text-align: center;
+}
+
+.card img {
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+.card button {
+  background-color: #26485B;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 18pt;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.card button:hover {
+  background-color: #1b3546;
+}
+
+/* === How to Order Section === */
+#how-to-order ol {
+  font-size: 18pt;
+  padding-right: 2rem;
+  text-align: right;
+  line-height: 2;
+}
+
+/* === Contact Form === */
+.form {
+  max-width: 600px;
+  margin: auto;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.form input,
+.form textarea {
+  width: 100%;
+  padding: 1rem;
+  font-size: 16pt;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.form button {
+  background-color: #26485B;
+  color: white;
+  font-size: 18pt;
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.form button:hover {
+  background-color: #1e3746;
+}
+
+/* === Footer === */
+footer {
+  background-color: #26485B;
+  color: #ffffff;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 16pt;
+  margin-top: 4rem;
+}

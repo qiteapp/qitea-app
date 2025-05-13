@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makkah Tour</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
+        <div class="app-name">TOUR ME</div>
+    </header>
+
+    <div id="side-menu" class="side-menu">
+        <div class="menu-close" onclick="toggleMenu()">×</div>
+        <ul>
+            <li onclick="showSection('home')">Home</li>
+            <li onclick="showSection('map')">Map</li>
+            <li onclick="showSection('services')">Services</li>
+            <li onclick="showSection('account')">Account</li>
+            <li onclick="showSection('settings')">Settings</li>
+        </ul>
+    </div>
+
+    <nav class="footer-menu">
+        <button id="home-section" onclick="showSection('home')">Home</button>
+        <button id="map-section" onclick="showSection('map')">Map</button>
+        <button id="services-section" onclick="showSection('services')">Services</button>
+        <button id="account-section" onclick="showSection('account')">Account</button>
+    </nav>
+
+    <main>
+        <!-- Home Section -->
+        <section id="home" class="content">
+            <h2>Find Activities</h2>
+            <div class="activity" onclick="showActivity('taste')">
+                <img src="https://via.placeholder.com/100" alt="Taste from Makkah">
+                <p>TASTE FROM MAKKAH</p>
+            </div>
+            <div class="activity" onclick="showActivity('shopping')">
+                <img src="https://via.placeholder.com/100" alt="Go Shopping">
+                <p>GO SHOPPING</p>
+            </div>
+            <div class="activity" onclick="showActivity('explore')">
+                <img src="https://via.placeholder.com/100" alt="Explore Makkah">
+                <p>EXPLORE MAKKAH</p>
+            </div>
+            <div class="activity" onclick="showActivity('gifts')">
+                <img src="https://via.placeholder.com/100" alt="Gifts Shop">
+                <p>GIFTS SHOP</p>
+            </div>
+
+            <!-- Content for each activity -->
+            <div id="taste" class="activity-content hidden">
+                <h3>Taste from Makkah</h3>
+                <ul>
+                    <li>
+                        <p>Al Tazaj</p>
+                        <button>Directions</button>
+                        <button>Order</button>
+                    </li>
+                    <li>
+                        <p>Al Baik</p>
+                        <button>Directions</button>
+                        <button>Order</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="shopping" class="activity-content hidden">
+                <h3>Go Shopping</h3>
+                <ul>
+                    <li>
+                        <p>Makkah Mall</p>
+                        <button>Directions</button>
+                        <button>Info</button>
+                    </li>
+                    <li>
+                        <p>Al Hijaz Mall</p>
+                        <button>Directions</button>
+                        <button>Info</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="explore" class="activity-content hidden">
+                <h3>Explore Makkah</h3>
+                <ul>
+                    <li>
+                        <p>Jabal Thour</p>
+                        <button>Directions</button>
+                        <button>Info</button>
+                    </li>
+                    <li>
+                        <p>Kiswa Factory</p>
+                        <button>Directions</button>
+                        <button>Info</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="gifts" class="activity-content hidden">
+                <h3>Gifts Shop</h3>
+                <ul>
+                    <li>
+                        <p>Makkah Package</p>
+                        <button>Add to Cart</button>
+                        <input type="number" min="1" value="1">
+                    </li>
+                    <li>
+                        <p>Kaaba Necklace</p>
+                        <button>Add to Cart</button>
+                        <input type="number" min="1" value="1">
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Map Section -->
+        <section id="map" class="content hidden">
+            <h2>Find a Destination</h2>
+            <input type="text" placeholder="Search">
+            <div id="map-container"></div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="content hidden">
+            <h2>Let Us Serve You</h2>
+            <ul>
+                <li>
+                    <i class="fas fa-shuttle-van"></i>
+                    <p>Pick-Up</p>
+                    <span>→</span>
+                </li>
+                <li>
+                    <i class="fas fa-hotel"></i>
+                    <p>Hotels</p>
+                    <span>→</span>
+                </li>
+                <li>
+                    <i class="fas fa-bus"></i>
+                    <p>Public Transport</p>
+                    <span>→</span>
+                </li>
+                <li>
+                    <i class="fas fa-user-tie"></i>
+                    <p>Tour Guide</p>
+                    <span>→</span>
+                </li>
+                <li>
+                    <i class="fas fa-map-marked-alt"></i>
+                    <p>Offline Guide</p>
+                    <span>→</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Account Section -->
+        <section id="account" class="content hidden">
+            <h2>Account</h2>
+            <button id="apple-sign-in">Sign in with Apple</button>
+            <button id="google-sign-in">Sign in with Google</button>
+        </section>
+        
+        <!-- Settings Section -->
+        <section id="settings" class="content hidden">
+            <h2>Settings</h2>
+            <!-- Add settings options here -->
+        </section>
+    </main>
+</body>
+</html>
