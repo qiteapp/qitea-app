@@ -1,0 +1,6 @@
+# مخرجات التشغيل المحلية
+leads.db
+out/
+pages/
+__pycache__/
+*.pyc

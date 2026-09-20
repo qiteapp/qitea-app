@@ -1,0 +1,15 @@
+{
+  "_comment": "Entry points for the motory KSA car-parts directory. The crawler also discovers brand pages from the root page, so this list only needs to be good enough to start.",
+  "root": "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/",
+  "brand_pages": [
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/تويوتا/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/هوندا/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/شفروليه/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/كرايسلر/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/جيلي/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/بي-واي-دي/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/مازيراتي/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/جينيسيس/",
+    "https://ksa.motory.com/ar/الدليل/قطع-غيار-سيارات/تاتا/"
+  ]
+}
