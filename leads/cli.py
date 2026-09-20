@@ -2,8 +2,10 @@
 """قاعدة بيانات متاجر قطع الغيار — عملاء محتملون لتطبيق قطعة.
 
 أوامر:
-  crawl    زحف دليل موتري وبناء القاعدة
-  ingest   معالجة صفحات HTML محفوظة (بدون إنترنت)
+  crawl      زحف دليل موتري وبناء القاعدة
+  ingest     معالجة صفحات HTML محفوظة (بدون إنترنت)
+  import-csv استيراد ملف CSV جاهز مع كشف الأعمدة تلقائياً
+  audit      تقرير جودة: ما الناقص وما يحتاج مراجعة
   clean    تنقية الأرقام العامة ووسم المكرر
   export   تصدير CSV / JSON / GeoJSON / خريطة HTML
   stats    ملخص القاعدة
@@ -23,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import crawler
 import export as ex
+import importer
 import store as db
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -67,6 +70,50 @@ def cmd_ingest(args):
     summary = crawler.ingest_dir(conn, args.dir)
     print_table("ملخص المعالجة", summary)
     print_table("القاعدة الآن", db.stats(conn))
+    conn.close()
+    return 0
+
+
+def cmd_import_csv(args):
+    conn = db.connect(args.db)
+    if not os.path.exists(args.file):
+        print("لا يوجد ملف بهذا المسار: %s" % args.file)
+        return 1
+    overrides = {}
+    for pair in args.map or []:
+        if "=" not in pair:
+            print("صيغة --map يجب أن تكون «الرأس=الحقل»، وصلني: %s" % pair)
+            return 1
+        header, field = pair.split("=", 1)
+        overrides[header.strip()] = field.strip()
+
+    summary, mapping = importer.import_csv(conn, args.file, overrides)
+    if mapping:
+        print_table("الأعمدة كما فُهمت", {h: f for h, f in mapping.items()})
+        unmapped = [h for h in importer.read_table(args.file)[1] if h not in mapping]
+        if unmapped:
+            print("\n  أعمدة لم تُستخدم: %s" % "، ".join(unmapped))
+            print("  لتصحيح أي عمود: --map \"اسم العمود=phone\"")
+    print_table("ملخص الاستيراد", summary)
+    print_table("القاعدة الآن", db.stats(conn))
+    print("\nالخطوة التالية: python3 cli.py clean ثم audit ثم export --all")
+    conn.close()
+    return 0
+
+
+def cmd_audit(args):
+    conn = db.connect(args.db)
+    report, issues = importer.audit(conn)
+    print_table("تقرير الجودة", report)
+    if args.show:
+        rows = issues.get(args.show)
+        if rows is None:
+            print("\nالفئات المتاحة: %s" % "، ".join(issues))
+            return 1
+        print("\n%s — أول %d سجل:" % (args.show, min(len(rows), args.limit)))
+        for row in rows[:args.limit]:
+            print("  #%-4s %-45s %s" % (row["id"], row["name"][:45],
+                                        row["mobile"] or row["source_url"][:40]))
     conn.close()
     return 0
 
@@ -169,6 +216,17 @@ def build_parser():
     ingest = subs.add_parser("ingest", help="معالجة صفحات محفوظة بدون إنترنت")
     ingest.add_argument("dir", help="مجلد فيه ملفات HTML")
     ingest.set_defaults(func=cmd_ingest)
+
+    imp = subs.add_parser("import-csv", help="استيراد ملف CSV جاهز")
+    imp.add_argument("file", help="مسار ملف CSV أو TSV")
+    imp.add_argument("--map", action="append", metavar="العمود=الحقل",
+                     help="تصحيح ربط عمود يدوياً، يمكن تكراره")
+    imp.set_defaults(func=cmd_import_csv)
+
+    audit = subs.add_parser("audit", help="تقرير جودة البيانات")
+    audit.add_argument("--show", metavar="الفئة", help="عرض سجلات فئة معينة")
+    audit.add_argument("--limit", type=int, default=20)
+    audit.set_defaults(func=cmd_audit)
 
     clean = subs.add_parser("clean", help="تنقية الأرقام ووسم المكرر")
     clean.add_argument("--phone-threshold", type=int, default=5,

@@ -130,6 +130,22 @@ def find_coords(*texts):
     return None
 
 
+_BARE_PAIR = re.compile(r"^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,/ ]\s*(-?\d{1,3}(?:\.\d+)?)\s*$")
+
+
+def parse_coord_cell(value):
+    """إحداثيات في خلية مستقلة مثل «24.7,46.7» أو «24.7 46.7».
+
+    تُقبل بدقة منخفضة فقط حين تكون الخلية كلها إحداثيات — لا داخل نص،
+    حتى لا تُلتقط أسعار أو موديلات.
+    """
+    match = _BARE_PAIR.match(unquote(unescape(str(value or ""))))
+    if not match:
+        return None
+    lat, lng = float(match.group(1)), float(match.group(2))
+    return (lat, lng) if in_ksa(lat, lng) else None
+
+
 def maps_url(lat, lng):
     return "https://www.google.com/maps/search/?api=1&query=%s,%s" % (lat, lng)
 

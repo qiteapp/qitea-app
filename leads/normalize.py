@@ -177,10 +177,10 @@ for _slug, _aliases in BRANDS.items():
         _BRAND_INDEX.append((strip_arabic(_alias), _slug))
 _BRAND_INDEX.sort(key=lambda pair: len(pair[0]), reverse=True)
 
-# أسماء قصيرة قد تُطابق داخل كلمة أخرى، فتحتاج مطابقة بحدود الكلمة
-_SHORT_BRANDS = {"kia", "mg", "ram", "man", "مان", "رام", "جاك", "تانك", "ميني", "كيا", "جيب"}
+# كل الأسماء تُطابق ككلمات كاملة: «ام جي» كانت تُطابق داخل «الدمام جيب»
 # بادئات عربية تلتصق بالاسم: «وكيا»، «الكيا»، «بتويوتا»
-_AR_PREFIX = r"(?:وال|بال|فال|لل|ال|[ولبفك])?"
+# ترتيب السوابق العربية: عطف + جرّ + تعريف، مثل «وبتويوتا» و«وللكيا»
+_AR_PREFIX = r"(?:[وف]?(?:لل|[بكل]?(?:ال)?))"
 _WORD_START = r"(?:^|[^\w؀-ۿ])"
 
 
@@ -200,11 +200,7 @@ def detect_brands(*texts):
         for needle, slug in _BRAND_INDEX:
             if slug in slugs or not needle:
                 continue
-            if len(needle) <= 4 or needle in _SHORT_BRANDS:
-                hit = _matches_whole_word(needle, haystack)
-            else:
-                hit = needle in haystack
-            if hit:
+            if _matches_whole_word(needle, haystack):
                 slugs.append(slug)
     return slugs
 

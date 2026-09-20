@@ -1,4 +1,5 @@
 """اختبارات خط الأنابيب. التشغيل: python3 tests/test_leads.py"""
+import csv
 import json
 import os
 import sys
@@ -11,6 +12,7 @@ sys.path.insert(0, os.path.dirname(HERE))
 import crawler
 import export as ex
 import extract
+import importer
 import normalize as nz
 import store as db
 
@@ -215,6 +217,125 @@ class TestDatabase(unittest.TestCase):
             row = self.conn.execute("SELECT source_url, city FROM stores").fetchone()
             self.assertEqual(row["source_url"], "https://ksa.motory.com/ar/x/1/")
             self.assertEqual(row["city"], "جدة")
+
+
+class TestCsvImport(unittest.TestCase):
+    """الملفات الجاهزة تأتي برؤوس مختلفة وأرقام أفسدها إكسل."""
+
+    def setUp(self):
+        handle, self.db_path = tempfile.mkstemp(suffix=".db")
+        os.close(handle)
+        os.unlink(self.db_path)
+        self.conn = db.connect(self.db_path)
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        self.conn.close()
+        for path in (self.db_path,):
+            if os.path.exists(path):
+                os.unlink(path)
+
+    def write_csv(self, rows, name="in.csv", encoding="utf-8-sig"):
+        path = os.path.join(self.tmp, name)
+        with open(path, "w", encoding=encoding, newline="") as fh:
+            csv.writer(fh).writerows(rows)
+        return path
+
+    def test_excel_damaged_numbers_are_repaired(self):
+        self.assertEqual(importer.repair_number("5.01112223E+08"), "0501112223")
+        self.assertEqual(importer.repair_number("501234567"), "0501234567")
+        self.assertEqual(importer.repair_number("112345678"), "0112345678")
+        self.assertEqual(importer.repair_number("0554433221"), "0554433221")
+
+    def test_headers_matched_in_arabic_and_english(self):
+        mapping = importer.match_headers(
+            ["Store Name", "رقم الجوال", "المدينة", "العنوان الكامل", "Brand", "خرائط"])
+        self.assertEqual(mapping["Store Name"], "name")
+        self.assertEqual(mapping["رقم الجوال"], "phone")
+        self.assertEqual(mapping["المدينة"], "city")
+        self.assertEqual(mapping["العنوان الكامل"], "address")
+        self.assertEqual(mapping["Brand"], "brand")
+        self.assertEqual(mapping["خرائط"], "maps_url")
+
+    def test_unknown_columns_detected_from_content(self):
+        path = self.write_csv([
+            ["a", "b", "c"],
+            ["مركز الفهد للقطع", "0554433221", "جدة"],
+            ["مؤسسة النخبة", "0501112223", "الرياض"],
+            ["ورشة الخليج", "0567778889", "الدمام"],
+            ["متجر رابع", "0533334444", "الخبر"],
+        ])
+        summary, mapping = importer.import_csv(self.conn, path, log=lambda *a: None)
+        self.assertEqual(mapping["b"], "phone")
+        self.assertEqual(mapping["c"], "city")
+        self.assertEqual(summary["متاجر جديدة"], 4)
+
+    def test_two_phones_in_one_cell(self):
+        path = self.write_csv([
+            ["الاسم", "الجوال"],
+            ["متجر أ", "0533334444 / 0138887777"],
+        ])
+        importer.import_csv(self.conn, path, log=lambda *a: None)
+        row = self.conn.execute("SELECT mobile, landline FROM stores").fetchone()
+        self.assertEqual(row["mobile"], "+966533334444")
+        self.assertEqual(row["landline"], "+966138887777")
+
+    def test_city_recovered_from_address(self):
+        path = self.write_csv([
+            ["الاسم", "الجوال", "المدينة", "العنوان"],
+            ["مؤسسة النخبة", "0501112223", "", "طريق الخرج، حي الفيصلية، الرياض"],
+        ])
+        importer.import_csv(self.conn, path, log=lambda *a: None)
+        row = self.conn.execute("SELECT city, region FROM stores").fetchone()
+        self.assertEqual(row["city"], "الرياض")
+        self.assertEqual(row["region"], "الرياض")
+
+    def test_bare_coordinate_cell(self):
+        path = self.write_csv([
+            ["الاسم", "الجوال", "الإحداثيات"],
+            ["متجر ب", "0501112223", "24.7,46.7"],
+        ])
+        importer.import_csv(self.conn, path, log=lambda *a: None)
+        row = self.conn.execute("SELECT lat, lng, geo_precision FROM stores").fetchone()
+        self.assertEqual((row["lat"], row["lng"], row["geo_precision"]), (24.7, 46.7, "exact"))
+
+    def test_manual_override_wins(self):
+        path = self.write_csv([
+            ["الاسم", "ملاحظات"],
+            ["متجر ج", "0501112223"],
+        ])
+        _summary, mapping = importer.import_csv(
+            self.conn, path, overrides={"ملاحظات": "phone"}, log=lambda *a: None)
+        self.assertEqual(mapping["ملاحظات"], "phone")
+        self.assertEqual(
+            self.conn.execute("SELECT mobile FROM stores").fetchone()["mobile"],
+            "+966501112223")
+
+    def test_windows_arabic_encoding(self):
+        path = self.write_csv([["الاسم", "الجوال"], ["متجر د", "0501112223"]],
+                              name="cp1256.csv", encoding="cp1256")
+        summary, _mapping = importer.import_csv(self.conn, path, log=lambda *a: None)
+        self.assertEqual(summary["متاجر جديدة"], 1)
+        self.assertEqual(self.conn.execute("SELECT name FROM stores").fetchone()["name"],
+                         "متجر د")
+
+    def test_empty_rows_skipped(self):
+        path = self.write_csv([["الاسم", "الجوال"], ["", ""], ["متجر هـ", "0501112223"]])
+        summary, _mapping = importer.import_csv(self.conn, path, log=lambda *a: None)
+        self.assertEqual(summary["متاجر جديدة"], 1)
+        self.assertEqual(summary["صفوف بلا اسم أو رقم"], 1)
+
+    def test_audit_flags_city_coordinate_conflict(self):
+        path = self.write_csv([
+            ["الاسم", "الجوال", "المدينة", "الإحداثيات"],
+            ["متجر متعارض", "0501112223", "الدمام", "24.7,46.7"],
+            ["متجر سليم", "0554433221", "جدة", "21.5810,39.1653"],
+        ])
+        importer.import_csv(self.conn, path, log=lambda *a: None)
+        report, issues = importer.audit(self.conn)
+        conflicts = issues["الإحداثيات بعيدة عن المدينة المذكورة"]
+        self.assertEqual([r["name"] for r in conflicts], ["متجر متعارض"])
+        self.assertEqual(report["الإجمالي (بعد إزالة المكرر)"], 2)
 
 
 if __name__ == "__main__":
