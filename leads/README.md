@@ -32,7 +32,13 @@ python3 cli.py export --all
 
 القاعدة نفسها في `leads.db` (SQLite) — تُفتح بأي عارض SQLite أو من بايثون.
 
-### عندك ملف CSV جاهز؟
+### عندك ملف CSV جاهز؟ أمر واحد يكفي
+
+```bash
+python3 cli.py all ~/Downloads/motary.csv
+```
+
+يستورد، ينقّي، يطبع تقرير الجودة، ويصدّر كل الصيغ. والخطوات منفصلة إن أردت:
 
 ```bash
 python3 cli.py import-csv ~/Downloads/motary.csv

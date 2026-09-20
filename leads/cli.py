@@ -4,6 +4,7 @@
 أوامر:
   crawl      زحف دليل موتري وبناء القاعدة
   ingest     معالجة صفحات HTML محفوظة (بدون إنترنت)
+  all        كل الخطوات على ملف CSV بأمر واحد (الأسهل)
   import-csv استيراد ملف CSV جاهز مع كشف الأعمدة تلقائياً
   audit      تقرير جودة: ما الناقص وما يحتاج مراجعة
   clean    تنقية الأرقام العامة ووسم المكرر
@@ -80,7 +81,7 @@ def cmd_import_csv(args):
         print("لا يوجد ملف بهذا المسار: %s" % args.file)
         return 1
     overrides = {}
-    for pair in args.map or []:
+    for pair in getattr(args, "column_map", None) or []:
         if "=" not in pair:
             print("صيغة --map يجب أن تكون «الرأس=الحقل»، وصلني: %s" % pair)
             return 1
@@ -96,7 +97,8 @@ def cmd_import_csv(args):
             print("  لتصحيح أي عمود: --map \"اسم العمود=phone\"")
     print_table("ملخص الاستيراد", summary)
     print_table("القاعدة الآن", db.stats(conn))
-    print("\nالخطوة التالية: python3 cli.py clean ثم audit ثم export --all")
+    if not getattr(args, "chained", False):
+        print("\nالخطوة التالية: python3 cli.py clean ثم audit ثم export --all")
     conn.close()
     return 0
 
@@ -156,6 +158,27 @@ def cmd_export(args):
     for path in made:
         print("  • %s" % path)
     conn.close()
+    return 0
+
+
+def cmd_all(args):
+    """استيراد + تنقية + تقرير + تصدير في أمر واحد."""
+    args.chained = True   # لا تطبع تلميح «الخطوة التالية» داخل التسلسل
+    steps = [
+        ("استيراد الملف", lambda: cmd_import_csv(args)),
+        ("التنقية", lambda: cmd_clean(args)),
+        ("تقرير الجودة", lambda: cmd_audit(args)),
+        ("التصدير", lambda: cmd_export(args)),
+    ]
+    for number, (label, step) in enumerate(steps, 1):
+        print("\n" + "=" * 46)
+        print("  الخطوة %d من %d: %s" % (number, len(steps), label))
+        print("=" * 46)
+        code = step()
+        if code:
+            print("\nتوقفت عند «%s». صحّح ما سبق ثم أعد المحاولة." % label)
+            return code
+    print("\n✅ تم. افتح out/leads.csv في إكسل، و out/map.html في المتصفح.")
     return 0
 
 
@@ -219,7 +242,7 @@ def build_parser():
 
     imp = subs.add_parser("import-csv", help="استيراد ملف CSV جاهز")
     imp.add_argument("file", help="مسار ملف CSV أو TSV")
-    imp.add_argument("--map", action="append", metavar="العمود=الحقل",
+    imp.add_argument("--map", action="append", dest="column_map", metavar="العمود=الحقل",
                      help="تصحيح ربط عمود يدوياً، يمكن تكراره")
     imp.set_defaults(func=cmd_import_csv)
 
@@ -244,6 +267,18 @@ def build_parser():
     export.add_argument("--mobile-only", action="store_true", help="من لديه جوال فقط")
     export.add_argument("--include-duplicates", action="store_true")
     export.set_defaults(func=cmd_export)
+
+    every = subs.add_parser("all", help="استيراد + تنقية + تقرير + تصدير في أمر واحد")
+    every.add_argument("file", help="مسار ملف CSV أو TSV")
+    every.add_argument("--map", action="append", dest="column_map", metavar="العمود=الحقل",
+                       help="تصحيح ربط عمود يدوياً، يمكن تكراره")
+    every.add_argument("--phone-threshold", type=int, default=5)
+    every.add_argument("--show", metavar="الفئة", help="عرض سجلات فئة في التقرير")
+    every.add_argument("--limit", type=int, default=20)
+    # أمر all يصدّر كل الصيغ، فيحتاج قيم export الافتراضية
+    every.set_defaults(func=cmd_all, all=True, csv=False, json=False, geojson=False,
+                       map=False, city=None, brand=None, mobile_only=False,
+                       include_duplicates=False)
 
     stats = subs.add_parser("stats", help="ملخص القاعدة")
     stats.set_defaults(func=cmd_stats)
